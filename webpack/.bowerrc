@@ -1,0 +1,11 @@
+{
+  "directory": "assets/vendor",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "package.json",
+    "src"
+  ]
+}

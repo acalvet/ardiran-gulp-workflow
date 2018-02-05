@@ -1,0 +1,8 @@
+Eliminar .gitignore de las siguientes carpetas:
+
+- assets/images/
+- assets/scripts/public/
+- assets/styles/public/
+
+
+
