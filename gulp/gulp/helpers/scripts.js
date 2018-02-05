@@ -15,6 +15,17 @@ var PROD = config.env == 'PROD' ? true : false;
 function js_build(data, dst, fileName){
   var FILENAME_ISEMPTY = fileName == '-1';
   return data.pipe(plugins.if(!PROD, plugins.sourcemaps.init()))
+      .pipe(plugins.sort({
+        comparator: function(file1, file2) {
+            if (file1.path.indexOf('requirejs') > -1) {
+              return 1; 
+            }
+            if (file2.path.indexOf('requirejs') > -1) {
+              return -1;
+            }
+            return 0;
+        }
+      }))
       .pipe(plugins.if(PROD, plugins.uglify()))
       .pipe(plugins.if(!FILENAME_ISEMPTY, plugins.concat(fileName)))
       .pipe(plugins.if(!PROD, plugins.sourcemaps.write('.')))
