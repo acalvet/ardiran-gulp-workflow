@@ -1,31 +1,260 @@
-'use strict';
+const gulp = require('gulp-param')(require('gulp'), process.argv);
+      babel = require('gulp-babel'),
+      uglify = require('gulp-uglify'),
+      concat = require('gulp-concat'),
+      sourcemaps = require('gulp-sourcemaps'),
+      gulpif = require('gulp-if'),
+      ts = require('gulp-typescript'),
+      del = require('del'),
+      less = require('gulp-less'),
+      cleanCss = require('gulp-clean-css'),
+      sass = require('gulp-sass'),
+      autoprefixer = require('gulp-autoprefixer');
 
-var gulp = require('gulp'),
-    config = require('./gulp/config'),
-    plugins = require('gulp-load-plugins')(),
-    requireDir = require('require-dir'),
-    tasks = requireDir('./gulp/tasks');
+const config = require('./gulpfile.config');
 
-var PROD = config.env == 'PROD' ? true : false;
-var SASS = config.project.styles == 'SASS' ? true : false;
-var LESS = config.project.styles == 'LESS' ? true : false;
-var TS = config.project.js == 'TS' ? true : false;
-var ES6 = config.project.js == 'ES6' ? true : false;
-var RJS = config.project.rjs ? true : false;
-var JS = !TS && !ES6 ? true : false;
+/*------------------------------------*\
+  #PARAMS
+\*------------------------------------*/
 
-/****
-** TAREAS
-****/
+var prodParam = false;
 
-gulp.task('build:prod', ['build:dev', 'images:optimize'], undefined);
+/*------------------------------------*\
+  #GLOBAL HELPERS
+\*------------------------------------*/
 
-gulp.task('build:dev', ['css:build', 'css:vendor:concat', 'js:build', 'js:vendor:concat'], undefined);
+function setProdParam(prod){
+  prodParam = prod == undefined ? false : prod;
+}
+
+function isProd(){
+  return prodParam || (config.env == 'PROD' || config.env == 'prod');
+}
+
+function isDev(){
+  return !isProd();
+}
+
+/*------------------------------------*\
+  #TASKS HELPERS
+\*------------------------------------*/
+
+function clean(src){
+  return del(src);
+}
+
+function concatCSS(src, dst) {
+
+  return gulp.src(src)
+    .pipe(concat('build.css'))
+    .pipe(gulpif(isDev(), sourcemaps.init()))
+    .pipe(autoprefixer({ browsers: ['last 2 versions', '> 5%', 'Firefox ESR'] }))
+    .pipe(gulpif(isProd(), cleanCss({ rebase: false, })))
+    .pipe(gulpif(isDev(), sourcemaps.write('.')))
+    .pipe(gulp.dest(dst));
+
+}
+
+function compileLESS(src, dst){
+
+  return gulp.src(src)
+    .pipe(less())
+    .pipe(gulp.dest(dst));
+
+}
+
+function compileSASS(src, dst){
+
+  return gulp.src(src)
+    .pipe(sass())
+    .pipe(gulp.dest(dst))
+
+}
+
+function concatJS(src, dst){
+
+  return gulp.src(src)
+    .pipe(concat('build.js'))
+    .pipe(gulpif(isDev(), sourcemaps.init()))
+    .pipe(gulpif(isProd(), uglify()))
+    .pipe(gulpif(isDev(), sourcemaps.write('.')))
+    .pipe(gulp.dest(dst));
+
+}
+
+function transpileES6(src, dst){
+
+  return gulp.src([src + '**/*.es6', src + '**/*.js'])
+    .pipe(babel({
+      moduleIds: true,
+      presets: ['env'],
+      plugins: ['transform-es2015-modules-amd']
+    }))
+    .pipe(gulp.dest(dst));
+
+}
+
+function transpileTS(src, dst){
+
+  return gulp.src(src + '**/*.ts')
+    .pipe(ts({
+      removeComments : true,
+      target: "ES6",
+    }))
+    .pipe(gulp.dest(dst));
+
+}
+
+/*------------------------------------*\
+  #SET PARAMS
+\*------------------------------------*/
+
+gulp.task('set:params', [], function(prod){
+
+  setProdParam(prod);
+
+});
+
+/*------------------------------------*\
+  #CSS:COMPILE TASK
+\*------------------------------------*/
+
+gulp.task('css:clean', [], function(){
+  return clean([config.paths.css.dst + '**/*.**']);
+});
+
+gulp.task('css:build', ['css:clean'], function(){
+
+  var dependencies = config.dependencies.css;
+  src = [config.paths.css.src + '**/*.css'];
+
+  return concatCSS(dependencies.concat(src), config.paths.css.dst);
+
+});
+
+/*------------------------------------*\
+  #LESS:COMPILE TASK
+\*------------------------------------*/
+
+gulp.task('less:clean', [], function(){
+  return clean([config.paths.less.cmp + '**/*.css', config.paths.less.dst + '**/*.**']);
+});
+
+gulp.task('less:compile', ['less:clean'], function(){
+  return compileLESS(config.paths.less.src, config.paths.less.cmp);
+});
+
+gulp.task('less:build', ['less:compile'], function(){
+
+  var dependencies = config.dependencies.css;
+  src = [config.paths.less.cmp + '**/*.css'];
+
+  return concatCSS(dependencies.concat(src), config.paths.less.dst);
+
+});
+
+/*------------------------------------*\
+  #SASS:COMPILE TASK
+\*------------------------------------*/
+
+gulp.task('sass:clean', [], function(){
+  return clean([config.paths.sass.cmp + '**/*.css', config.paths.sass.dst + '**/*.**']);
+});
+
+gulp.task('sass:compile', ['sass:clean'], function(){
+  return compileSASS(config.paths.sass.src, config.paths.sass.cmp);
+});
+
+gulp.task('sass:build', ['sass:compile'], function(){
+
+  var dependencies = config.dependencies.css;
+  src = [config.paths.sass.cmp + '**/*.css'];
+
+  return concatCSS(dependencies.concat(src), config.paths.sass.dst);
+
+});
+
+/*------------------------------------*\
+  #JS:COMPILE TASK
+\*------------------------------------*/
+
+gulp.task('js:clean', [], function(){
+  return clean([config.paths.js.dst + '**/*.**']);
+});
+
+gulp.task('js:build', ['js:clean'], function(){
+
+  var dependencies = config.dependencies.js;
+  src = [config.paths.js.src + '**/*.js'];
+
+  return concatJS(dependencies.concat(src), config.paths.js.dst);
+
+});
+
+/*------------------------------------*\
+  #ES6:COMPILE TASK
+\*------------------------------------*/
+
+gulp.task('es6:clean', [], function(){
+  return clean([config.paths.es6.cmp + '**/*.js', config.paths.es6.dst + '**/*.**']);
+});
+
+gulp.task('es6:transpile', ['es6:clean'], function(){
+  return transpileES6(config.paths.es6.src, config.paths.es6.cmp);
+});
+
+gulp.task('es6:build', ['es6:transpile'], function(){
+
+  var dependencies = config.dependencies.js;
+      src = [config.paths.es6.cmp + '**/*.js'];
+
+  return concatJS(dependencies.concat(src), config.paths.es6.dst);
+
+});
+
+/*------------------------------------*\
+  #TS:COMPILE TASK
+\*------------------------------------*/
+
+gulp.task('ts:clean', [], function(){
+  return clean([config.paths.ts.cmp_ts + '**/*.js', config.paths.ts.cmp_es6 + '**/*.js', config.paths.ts.dst + '**/*.**']);
+});
+
+gulp.task('ts:transpile', ['ts:clean'], function(){
+  return transpileTS(config.paths.ts.src, config.paths.ts.cmp_ts);
+});
+
+gulp.task('ts:es6:transpile', ['ts:transpile'], function(){
+  return transpileES6(config.paths.ts.cmp_ts, config.paths.ts.cmp_es6);
+});
+
+gulp.task('ts:build', ['ts:es6:transpile'], function(){
+
+  var dependencies = config.dependencies.js;
+  src = [config.paths.ts.cmp_es6 + '**/*.js'];
+
+  return concatJS(dependencies.concat(src), config.paths.ts.dst);
+
+});
+
+/*------------------------------------*\
+  #GLOBAL TASKS
+\*------------------------------------*/
+
+gulp.task('build:styles', ['set:params', 'css:build', 'less:build', 'sass:build'], function(){ });
+
+gulp.task('build:scripts', ['set:params', 'js:build', 'es6:build', 'ts:build'], function(){ });
+
+gulp.task('build', ['build:styles', 'build:scripts'], function(){ });
 
 gulp.task('watch', function(){
-  if(LESS) gulp.watch(config.watchers.css.less, ['css:build']);
-  if(SASS) gulp.watch(config.watchers.css.sass, ['css:build']);
-  if(TS) gulp.watch(config.watchers.js.ts, ['js:build']);
-  if(ES6) gulp.watch(config.watchers.js.es6, ['js:build']);
-  if(JS) gulp.watch(config.watchers.js.js, ['js:build']);
+
+  gulp.watch(config.paths.css.watch + '**/*.css', ['set:params', 'css:build']);
+  gulp.watch(config.paths.less.watch + '**/*.less', ['set:params', 'less:build']);
+  gulp.watch(config.paths.sass.watch + '**/*.scss', ['set:params', 'sass:build']);
+
+  gulp.watch(config.paths.js.watch + '**/*.js', ['set:params', 'js:build']);
+  gulp.watch(config.paths.es6.watch + '**/*.es6', ['set:params', 'es6:build']);
+  gulp.watch(config.paths.ts.watch + '**/*.ts', ['set:params', 'ts:build']);
+
 });

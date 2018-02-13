@@ -1,33 +1,43 @@
 {
-  "name": "gulp-test",
+  "name": "frontend-workflow",
   "version": "1.0.0",
-  "description": "",
+  "description": "Gulp and Webpack tasks.",
   "main": "gulpfile.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acalvet/frontend-workflow.git"
+  },
+  "author": "acalvet",
+  "license": "GPL-2.0",
+  "bugs": {
+    "url": "https://github.com/acalvet/frontend-workflow/issues"
+  },
+  "homepage": "https://github.com/acalvet/frontend-workflow#readme",
   "devDependencies": {
-    "babel-core": "^6.25.0",
+    "babel-core": "^6.26.0",
     "babel-plugin-transform-es2015-modules-amd": "^6.24.1",
-    "babel-preset-es2015": "^6.24.1",
-    "bower": "^1.8.0",
+    "babel-preset-env": "^1.6.1",
+    "del": "^3.0.0",
     "gulp": "^3.9.1",
-    "gulp-autoprefixer": "^4.0.0",
-    "gulp-babel": "^7.0.0",
-    "gulp-clean-css": "^3.7.0",
+    "gulp-autoprefixer": "^4.1.0",
+    "gulp-babel": "^7.0.1",
+    "gulp-clean-css": "^3.9.2",
     "gulp-concat": "^2.6.1",
     "gulp-if": "^2.0.2",
-    "gulp-kraken": "^0.2.0",
-    "gulp-less": "^3.3.2",
-    "gulp-load-plugins": "^1.5.0",
-    "gulp-requirejs-optimize": "^1.2.0",
+    "gulp-less": "^3.5.0",
+    "gulp-param": "^1.0.3",
     "gulp-sass": "^3.1.0",
-    "gulp-sourcemaps": "^2.6.0",
-    "gulp-typescript": "^3.2.1",
+    "gulp-sourcemaps": "^2.6.4",
+    "gulp-typescript": "^4.0.1",
     "gulp-uglify": "^3.0.0",
-    "require-dir": "^0.3.2",
-    "typescript": "^2.4.2"
+    "typescript": "^2.7.1",
+    "yarn": "^1.3.2"
+  },
+  "dependencies": {
+    "normalize.css": "^8.0.0",
+    "requirejs": "^2.3.5"
   }
 }
