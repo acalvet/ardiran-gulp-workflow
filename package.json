@@ -1,21 +1,21 @@
 {
-  "name": "frontend-workflow",
+  "name": "ardiran-gulp-workflow",
   "version": "1.0.0",
-  "description": "Gulp and Webpack tasks.",
+  "description": "Gulp tasks.",
   "main": "gulpfile.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/acalvet/frontend-workflow.git"
+    "url": "git+https://github.com/acalvet/ardiran-gulp-workflow.git"
   },
   "author": "acalvet",
   "license": "GPL-2.0",
   "bugs": {
-    "url": "https://github.com/acalvet/frontend-workflow/issues"
+    "url": "https://github.com/acalvet/ardiran-gulp-workflow/issues"
   },
-  "homepage": "https://github.com/acalvet/frontend-workflow#readme",
+  "homepage": "https://github.com/acalvet/ardiran-gulp-workflow#readme",
   "devDependencies": { },
   "dependencies": {
     "babel-core": "^6.26.0",

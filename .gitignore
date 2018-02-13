@@ -3,4 +3,4 @@ assets/scripts/cmp/
 assets/styles/cmp/
 node_modules/
 yarn.lock
-nump-debug.log
+npm-debug.log
