@@ -4,6 +4,10 @@ module.exports = {
 
   paths: {
 
+    images: {
+      src: ['./assets/images/**/*.*', '!./assets/images/**/*.ico', '!./assets/images/**/*.svg', '!./assets/images/tmp/**/*.*'],
+    },
+
     css: {
       src: './assets/styles/src/css/',
       dst: './assets/styles/public/css/',
@@ -56,6 +60,19 @@ module.exports = {
     js: [
       './node_modules/requirejs/require.js',
     ],
+
+  },
+
+  options: {
+
+    images: {
+
+      kraken: {
+        key: '',
+        secret: '',
+      },
+
+    }
 
   }
 

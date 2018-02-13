@@ -9,7 +9,8 @@ const gulp = require('gulp-param')(require('gulp'), process.argv);
       less = require('gulp-less'),
       cleanCss = require('gulp-clean-css'),
       sass = require('gulp-sass'),
-      autoprefixer = require('gulp-autoprefixer');
+      autoprefixer = require('gulp-autoprefixer'),
+      kraken = require('gulp-kraken');
 
 const config = require('./gulpfile.config');
 
@@ -41,6 +42,18 @@ function isDev(){
 
 function clean(src){
   return del(src);
+}
+
+function optimizeIMG(src){
+
+  return gulp.src(src)
+    .pipe(kraken({
+      key: config.options.images.kraken.key,
+      secret: config.options.images.kraken.secret,
+      lossy: true,
+      concurrency: 6
+    }));
+
 }
 
 function concatCSS(src, dst) {
@@ -116,7 +129,15 @@ gulp.task('set:params', [], function(prod){
 });
 
 /*------------------------------------*\
-  #CSS:COMPILE TASK
+  #IMG:OPTIMIZE TASK
+\*------------------------------------*/
+
+gulp.task('images:optimize', function(){
+  return optimizeIMG(config.paths.images.src);
+});
+
+/*------------------------------------*\
+  #CSS:BUILD TASK
 \*------------------------------------*/
 
 gulp.task('css:clean', [], function(){
@@ -133,7 +154,7 @@ gulp.task('css:build', ['css:clean'], function(){
 });
 
 /*------------------------------------*\
-  #LESS:COMPILE TASK
+  #LESS:BUILD TASK
 \*------------------------------------*/
 
 gulp.task('less:clean', [], function(){
@@ -154,7 +175,7 @@ gulp.task('less:build', ['less:compile'], function(){
 });
 
 /*------------------------------------*\
-  #SASS:COMPILE TASK
+  #SASS:BUILD TASK
 \*------------------------------------*/
 
 gulp.task('sass:clean', [], function(){
@@ -175,7 +196,7 @@ gulp.task('sass:build', ['sass:compile'], function(){
 });
 
 /*------------------------------------*\
-  #JS:COMPILE TASK
+  #JS:BUILD TASK
 \*------------------------------------*/
 
 gulp.task('js:clean', [], function(){
@@ -192,7 +213,7 @@ gulp.task('js:build', ['js:clean'], function(){
 });
 
 /*------------------------------------*\
-  #ES6:COMPILE TASK
+  #ES6:BUILD TASK
 \*------------------------------------*/
 
 gulp.task('es6:clean', [], function(){
@@ -213,7 +234,7 @@ gulp.task('es6:build', ['es6:transpile'], function(){
 });
 
 /*------------------------------------*\
-  #TS:COMPILE TASK
+  #TS:BUILD TASK
 \*------------------------------------*/
 
 gulp.task('ts:clean', [], function(){
