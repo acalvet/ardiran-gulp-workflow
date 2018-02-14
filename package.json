@@ -1,6 +1,6 @@
 {
   "name": "ardiran-gulp-workflow",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Gulp tasks.",
   "main": "gulpfile.js",
   "scripts": {
