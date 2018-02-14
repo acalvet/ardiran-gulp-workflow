@@ -1,6 +1,6 @@
 {
   "name": "ardiran-gulp-workflow",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Gulp tasks.",
   "main": "gulpfile.js",
   "scripts": {
@@ -16,7 +16,7 @@
     "url": "https://github.com/acalvet/ardiran-gulp-workflow/issues"
   },
   "homepage": "https://github.com/acalvet/ardiran-gulp-workflow#readme",
-  "devDependencies": { },
+  "devDependencies": {},
   "dependencies": {
     "babel-core": "^6.26.0",
     "babel-plugin-transform-es2015-modules-amd": "^6.24.1",
