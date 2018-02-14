@@ -60,6 +60,8 @@ module.exports = {
 
   dependencies: {
 
+    folder: './assets/vendor/',
+
     css: [ ],
 
     js: [ ],

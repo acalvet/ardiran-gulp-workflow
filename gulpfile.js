@@ -12,8 +12,7 @@ const gulp = require('gulp-param')(require('gulp'), process.argv);
       autoprefixer = require('gulp-autoprefixer'),
       kraken = require('gulp-kraken'),
       rewriteCSS = require('gulp-rewrite-css'),
-      npmDist = require('gulp-npm-dist'),
-      rename = require('gulp-rename');
+      npmDist = require('gulp-npm-dist');
 
 var configFile = require('./gulpfile.config');
 
@@ -61,10 +60,7 @@ function build() {
   function copyDependencies(){
 
     return gulp.src(npmDist(), {base:'./node_modules'})
-      .pipe(rename(function(path) {
-        path.dirname = path.dirname.replace(/\/dist/, '').replace(/\\dist/, '');
-      }))
-      .pipe(gulp.dest('./assets/vendor/'));
+      .pipe(gulp.dest(ardiran.config.dependencies.folder));
 
   }
 
@@ -332,7 +328,7 @@ function build() {
 
   gulp.task('ardiran:build:images', ['ardiran:set:params', 'ardiran:images:optimize'], function () {});
 
-  gulp.task('ardiran:build', ['ardiran:build:dependencies', 'ardiran:build:styles', 'ardiran:build:scripts', 'ardiran:build:images'], function () { });
+  gulp.task('ardiran:build', ['ardiran:build:styles', 'ardiran:build:scripts', 'ardiran:build:images'], function () { });
 
   gulp.task('ardiran:watch', function () {
 
