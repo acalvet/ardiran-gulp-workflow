@@ -1,5 +1,12 @@
 module.exports = {
 
+  project: {
+
+    styles: 'LESS', // LESS, SASS or CSS
+    scripts: 'ES6', // ES6, TS or JS
+
+  },
+
   env: 'DEV', // PROD or DEV
 
   paths: {
@@ -53,13 +60,9 @@ module.exports = {
 
   dependencies: {
 
-    css: [
-      './node_modules/normalize.css/normalize.css',
-    ],
+    css: [ ],
 
-    js: [
-      './node_modules/requirejs/require.js',
-    ],
+    js: [ ],
 
   },
 
