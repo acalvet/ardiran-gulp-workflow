@@ -12,7 +12,7 @@ const gulp = require('gulp-param')(require('gulp'), process.argv);
       autoprefixer = require('gulp-autoprefixer'),
       kraken = require('gulp-kraken'),
       rewriteCSS = require('gulp-rewrite-css'),
-      npmDist = require('gulp-npm-dist');
+      gulpCopy = require('gulp-copy');
 
 var configFile = require('./gulpfile.config');
 
@@ -59,8 +59,15 @@ function build() {
 
   function copyDependencies(){
 
-    return gulp.src(npmDist({ copyUnminified: true }), {base:'./node_modules'})
-      .pipe(gulp.dest(ardiran.config.dependencies.folder));
+    ardiran.config.dependencies.copy.src.forEach(function(dep) {
+
+      gulp.src(dep + '**/**.*')
+        .pipe(gulpCopy(ardiran.config.dependencies.copy.dst, { prefix: 1 }))
+        .pipe(gulp.dest(ardiran.config.dependencies.copy.dst));
+
+    })
+
+    return true;
 
   }
 
@@ -153,6 +160,8 @@ function build() {
 
     setProdParam(prod);
 
+    return gulp.src('');
+
   });
 
   /*------------------------------------*\
@@ -160,7 +169,11 @@ function build() {
 \*------------------------------------*/
 
   gulp.task('ardiran:dependencies:copy', [], function () {
-    return copyDependencies();
+
+    copyDependencies();
+
+    return gulp.src('');
+
   });
 
   /*------------------------------------*\
@@ -182,7 +195,7 @@ function build() {
   gulp.task('ardiran:css:build', ['ardiran:css:clean'], function () {
 
     if(ardiran.config.project.styles != 'CSS')
-      return true;
+      return gulp.src('');
 
     var dependencies = ardiran.config.dependencies.css,
         src = [ardiran.config.paths.css.src + '**/*.css'];
@@ -206,7 +219,7 @@ function build() {
   gulp.task('ardiran:less:build', ['ardiran:less:compile'], function () {
 
     if(ardiran.config.project.styles != 'LESS')
-      return true;
+      return gulp.src('');
 
     var dependencies = ardiran.config.dependencies.css,
         src = [ardiran.config.paths.less.cmp + '**/*.css'];
@@ -230,7 +243,7 @@ function build() {
   gulp.task('ardiran:sass:build', ['ardiran:sass:compile'], function () {
 
     if(ardiran.config.project.styles != 'SASS')
-      return true;
+      return gulp.src('');
 
     var dependencies = ardiran.config.dependencies.css,
         src = [ardiran.config.paths.sass.cmp + '**/*.css'];
@@ -250,7 +263,7 @@ function build() {
   gulp.task('ardiran:js:build', ['ardiran:js:clean'], function () {
 
     if(ardiran.config.project.scripts != 'JS')
-      return true;
+      return gulp.src('');
 
     var dependencies = ardiran.config.dependencies.js,
         src = [ardiran.config.paths.js.src + '**/*.js'];
@@ -274,7 +287,7 @@ function build() {
   gulp.task('ardiran:es6:build', ['ardiran:es6:transpile'], function () {
 
     if(ardiran.config.project.scripts != 'ES6')
-      return true;
+      return gulp.src('');
 
     var dependencies = ardiran.config.dependencies.js,
         src = [ardiran.config.paths.es6.cmp + '**/*.js'];
@@ -302,7 +315,7 @@ function build() {
   gulp.task('ardiran:ts:build', ['ardiran:ts:es6:transpile'], function () {
 
     if(ardiran.config.project.scripts != 'TS')
-      return true;
+      return gulp.src('');
 
     var dependencies = ardiran.config.dependencies.js,
         src = [ardiran.config.paths.ts.cmp_es6 + '**/*.js'];
@@ -315,7 +328,7 @@ function build() {
     #GLOBAL TASKS
   \*------------------------------------*/
 
-  gulp.task('ardiran:build:dependencies', ['ardiran:set:params', 'ardiran:dependencies:copy'], function () { });
+  gulp.task('ardiran:build:dependencies', ['ardiran:dependencies:copy'], function () { });
 
   gulp.task('ardiran:build:styles', ['ardiran:set:params', 'ardiran:css:build', 'ardiran:less:build', 'ardiran:sass:build'], function () { });
 
@@ -325,15 +338,15 @@ function build() {
 
   gulp.task('ardiran:build', ['ardiran:build:styles', 'ardiran:build:scripts', 'ardiran:build:images'], function () { });
 
-  gulp.task('ardiran:watch', function () {
+  gulp.task('ardiran:watch', ['ardiran:set:params'], function () {
 
-    gulp.watch(ardiran.config.paths.css.watch + '**/*.css', ['ardiran:set:params', 'ardiran:css:build']);
-    gulp.watch(ardiran.config.paths.less.watch + '**/*.less', ['ardiran:set:params', 'ardiran:less:build']);
-    gulp.watch(ardiran.config.paths.sass.watch + '**/*.scss', ['ardiran:set:params', 'ardiran:sass:build']);
+    gulp.watch(ardiran.config.paths.css.watch + '**/*.css', ['ardiran:css:build']);
+    gulp.watch(ardiran.config.paths.less.watch + '**/*.less', ['ardiran:less:build']);
+    gulp.watch(ardiran.config.paths.sass.watch + '**/*.scss', ['ardiran:sass:build']);
 
-    gulp.watch(ardiran.config.paths.js.watch + '**/*.js', ['ardiran:set:params', 'ardiran:js:build']);
-    gulp.watch(ardiran.config.paths.es6.watch + '**/*.es6', ['ardiran:set:params', 'ardiran:es6:build']);
-    gulp.watch(ardiran.config.paths.ts.watch + '**/*.ts', ['ardiran:set:params', 'ardiran:ts:build']);
+    gulp.watch(ardiran.config.paths.js.watch + '**/*.js', ['ardiran:js:build']);
+    gulp.watch(ardiran.config.paths.es6.watch + '**/*.es6', ['ardiran:es6:build']);
+    gulp.watch(ardiran.config.paths.ts.watch + '**/*.ts', ['ardiran:ts:build']);
 
   });
 

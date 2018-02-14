@@ -60,7 +60,16 @@ module.exports = {
 
   dependencies: {
 
-    folder: './assets/vendor/',
+    copy: {
+
+      src: [
+        './node_modules/handlebars/',
+        './node_modules/requirejs/'
+      ],
+
+      dst: './assets/vendor/',
+
+    },
 
     css: [ ],
 
