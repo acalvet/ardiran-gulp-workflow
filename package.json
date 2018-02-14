@@ -16,7 +16,8 @@
     "url": "https://github.com/acalvet/ardiran-gulp-workflow/issues"
   },
   "homepage": "https://github.com/acalvet/ardiran-gulp-workflow#readme",
-  "devDependencies": {
+  "devDependencies": { },
+  "dependencies": {
     "babel-core": "^6.26.0",
     "babel-plugin-transform-es2015-modules-amd": "^6.24.1",
     "babel-preset-env": "^1.6.1",
@@ -39,7 +40,6 @@
     "gulp-uglify": "^3.0.0",
     "typescript": "^2.7.1"
   },
-  "dependencies": {},
   "engines": {
     "node": ">=4.2.4"
   }

@@ -347,5 +347,3 @@ function build() {
   });
 
 }
-
-ardiran.init();
