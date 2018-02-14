@@ -59,7 +59,7 @@ function build() {
 
   function copyDependencies(){
 
-    return gulp.src(npmDist(), {base:'./node_modules'})
+    return gulp.src(npmDist({ copyUnminified: true }), {base:'./node_modules'})
       .pipe(gulp.dest(ardiran.config.dependencies.folder));
 
   }
@@ -160,12 +160,7 @@ function build() {
 \*------------------------------------*/
 
   gulp.task('ardiran:dependencies:copy', [], function () {
-
-    if(!isProd())
-      return;
-
     return copyDependencies();
-
   });
 
   /*------------------------------------*\
