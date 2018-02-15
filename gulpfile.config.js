@@ -2,12 +2,10 @@ module.exports = {
 
   project: {
 
-    styles: 'LESS', // LESS, SASS or CSS
-    scripts: 'ES6', // ES6, TS or JS
+    styles: '', // LESS, SASS or CSS
+    scripts: '', // ES6, TS or JS
 
   },
-
-  env: 'DEV', // PROD or DEV
 
   paths: {
 
@@ -62,10 +60,7 @@ module.exports = {
 
     copy: {
 
-      src: [
-        './node_modules/handlebars/',
-        './node_modules/requirejs/'
-      ],
+      src: [ ],
 
       dst: './assets/vendor/',
 

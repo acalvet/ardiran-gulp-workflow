@@ -1,18 +1,20 @@
-const gulp = require('gulp-param')(require('gulp'), process.argv);
-      babel = require('gulp-babel'),
-      uglify = require('gulp-uglify'),
-      concat = require('gulp-concat'),
-      sourcemaps = require('gulp-sourcemaps'),
-      gulpif = require('gulp-if'),
-      ts = require('gulp-typescript'),
-      del = require('del'),
-      less = require('gulp-less'),
-      cleanCss = require('gulp-clean-css'),
-      sass = require('gulp-sass'),
-      autoprefixer = require('gulp-autoprefixer'),
-      kraken = require('gulp-kraken'),
-      rewriteCSS = require('gulp-rewrite-css'),
-      gulpCopy = require('gulp-copy');
+var gulp = require('gulp')
+var params = require('yargs').argv;
+var less = require('gulp-less');
+var del = require('del');
+var gulpif = require('gulp-if');
+var concat = require('gulp-concat');
+var sourcemaps = require('gulp-sourcemaps');
+var cleanCss = require('gulp-clean-css');
+var autoprefixer = require('gulp-autoprefixer');
+var rewriteCSS = require('gulp-rewrite-css');
+var sass = require('gulp-sass');
+var uglify = require('gulp-uglify');
+var babel = require('gulp-babel');
+var ts = require('gulp-typescript');
+var gulpCopy = require('gulp-copy');
+var kraken = require('gulp-kraken');
+var Observable = require('rx').Observable;
 
 var configFile = require('./gulpfile.config');
 
@@ -21,88 +23,99 @@ var configFile = require('./gulpfile.config');
 \*------------------------------------*/
 
 var ardiran = module.exports = {
-  'init': build,
-  'config': configFile,
+  configFile: configFile,
+  init: build,
 };
 
 function build() {
 
   /*------------------------------------*\
-    #PARAMS
+    #CONFIG
   \*------------------------------------*/
 
-  var prodParam = false;
+  var config = {};
+
+  config.isProd = params.prod != undefined ? true : false;
+
+  config.styles = ardiran.configFile.project.styles != undefined ? ardiran.configFile.project.styles : '';
+  config.scripts = ardiran.configFile.project.scripts != undefined ? ardiran.configFile.project.scripts : '';
 
   /*------------------------------------*\
-    #GLOBAL HELPERS
+    #HELPERS
   \*------------------------------------*/
 
-  function setProdParam(prod) {
-    prodParam = prod == undefined ? false : prod;
-  }
-
-  function isProd() {
-    return prodParam || (ardiran.config.env == 'PROD' || ardiran.config.env == 'prod');
-  }
-
-  function isDev() {
-    return !isProd();
-  }
-
-  /*------------------------------------*\
-    #TASKS HELPERS
-  \*------------------------------------*/
+  /* Clean folder */
 
   function clean(src) {
     return del(src);
   }
 
-  function copyDependencies(){
+  /* Copy dependencies */
 
-    ardiran.config.dependencies.copy.src.forEach(function(dep) {
+  function copy_files(files, dst) {
 
-      gulp.src(dep + '**/**.*')
-        .pipe(gulpCopy(ardiran.config.dependencies.copy.dst, { prefix: 1 }))
-        .pipe(gulp.dest(ardiran.config.dependencies.copy.dst));
+    var stream = Observable.return(42);
+
+    files.forEach(function (dep) {
+
+      stream = gulp.src(dep + '**/**.*')
+        .pipe(gulpCopy(dst, {prefix: 1}))
+        .pipe(gulp.dest(dst));
 
     })
 
-    return true;
+    return stream;
 
   }
 
-  function optimizeIMG(src) {
+  /* Optimize images */
 
-    if(!ardiran.config.options.images.kraken.key || ardiran.config.options.images.kraken.key == '')
-      return true;
+  function optimize_img(src, done) {
 
-    if(!ardiran.config.options.images.kraken.secret || ardiran.config.options.images.kraken.secret == '')
-      return true;
+    var error = false;
+
+    if (ardiran.configFile.options.images.kraken.key === undefined || ardiran.configFile.options.images.kraken.key == '') {
+      console.log("[ERROR] You must configure the parameter 'options.images.kraken.key' to optimize your images.");
+      error = true;
+    }
+
+    if (ardiran.configFile.options.images.kraken.secret === undefined || ardiran.configFile.options.images.kraken.secret == '') {
+      console.log("[ERROR] You must configure the parameter 'options.images.kraken.secret' to optimize your images.");
+      error = true;
+    }
+
+    if (error) {
+      return done();
+    }
 
     return gulp.src(src)
       .pipe(kraken({
-        key: ardiran.config.options.images.kraken.key,
-        secret: ardiran.config.options.images.kraken.secret,
+        key: ardiran.configFile.options.images.kraken.key,
+        secret: ardiran.configFile.options.images.kraken.secret,
         lossy: true,
         concurrency: 6
       }));
 
   }
 
-  function concatCSS(src, dst) {
+  /* Concat css */
+
+  function concat_css(src, dst) {
 
     return gulp.src(src)
       .pipe(rewriteCSS({destination: dst}))
       .pipe(concat('build.css'))
-      .pipe(gulpif(isDev(), sourcemaps.init()))
+      .pipe(gulpif(!config.isProd, sourcemaps.init()))
       .pipe(autoprefixer({browsers: ['last 2 versions', '> 5%', 'Firefox ESR']}))
-      .pipe(gulpif(isProd(), cleanCss({rebase: false,})))
-      .pipe(gulpif(isDev(), sourcemaps.write('.')))
+      .pipe(gulpif(config.isProd, cleanCss({rebase: false,})))
+      .pipe(gulpif(!config.isProd, sourcemaps.write('.')))
       .pipe(gulp.dest(dst));
 
   }
 
-  function compileLESS(src, dst) {
+  /* Compile less */
+
+  function compile_less(src, dst) {
 
     return gulp.src(src)
       .pipe(less())
@@ -110,7 +123,9 @@ function build() {
 
   }
 
-  function compileSASS(src, dst) {
+  /* Compile Sass */
+
+  function compile_sass(src, dst) {
 
     return gulp.src(src)
       .pipe(sass())
@@ -118,18 +133,22 @@ function build() {
 
   }
 
-  function concatJS(src, dst) {
+  /* Concat js */
+
+  function concat_js(src, dst) {
 
     return gulp.src(src)
       .pipe(concat('build.js'))
-      .pipe(gulpif(isDev(), sourcemaps.init()))
-      .pipe(gulpif(isProd(), uglify()))
-      .pipe(gulpif(isDev(), sourcemaps.write('.')))
+      .pipe(gulpif(!config.isProd, sourcemaps.init()))
+      .pipe(gulpif(config.isProd, uglify()))
+      .pipe(gulpif(!config.isProd, sourcemaps.write('.')))
       .pipe(gulp.dest(dst));
 
   }
 
-  function transpileES6(src, dst) {
+  /* Transpile ES6 to ES5 */
+
+  function transpile_es6(src, dst) {
 
     return gulp.src([src + '**/*.es6', src + '**/*.js'])
       .pipe(babel({
@@ -141,7 +160,9 @@ function build() {
 
   }
 
-  function transpileTS(src, dst) {
+  /* Transpile ts to es6 */
+
+  function transpile_ts(src, dst) {
 
     return gulp.src(src + '**/*.ts')
       .pipe(ts({
@@ -152,55 +173,62 @@ function build() {
 
   }
 
+
+
   /*------------------------------------*\
-    #SET PARAMS
+    #SET IS PRODUCTION
   \*------------------------------------*/
 
-  gulp.task('ardiran:set:params', [], function (prod) {
+  gulp.task('ardiran:set:production', function (done) {
 
-    setProdParam(prod);
+    config.isProd = true;
 
-    return gulp.src('');
+    return Observable.return(42);
 
   });
 
   /*------------------------------------*\
-  #COPY DEPENDENCIES
-\*------------------------------------*/
+    #COPY DEPENDENCIES
+  \*------------------------------------*/
 
-  gulp.task('ardiran:dependencies:copy', [], function () {
-
-    copyDependencies();
-
-    return gulp.src('');
-
+  gulp.task('ardiran:dependencies:copy', function (done) {
+    return copy_files(ardiran.configFile.dependencies.copy.src, ardiran.configFile.dependencies.copy.dst);
   });
 
   /*------------------------------------*\
     #IMG:OPTIMIZE TASK
   \*------------------------------------*/
 
-  gulp.task('ardiran:images:optimize', function () {
-    return optimizeIMG(ardiran.config.paths.images.src);
+  gulp.task('ardiran:images:optimize', function (done) {
+    return optimize_img(ardiran.configFile.paths.images.src, done);
   });
 
   /*------------------------------------*\
     #CSS:BUILD TASK
   \*------------------------------------*/
 
-  gulp.task('ardiran:css:clean', [], function () {
-    return clean([ardiran.config.paths.css.dst + '**/*.**']);
+  /* Clean CSS folders */
+
+  gulp.task('ardiran:css:clean', function (done) {
+    return clean([ardiran.configFile.paths.css.dst + '**/*.**']);
   });
 
-  gulp.task('ardiran:css:build', ['ardiran:css:clean'], function () {
+  /* Concat CSS */
 
-    if(ardiran.config.project.styles != 'CSS')
-      return gulp.src('');
+  gulp.task('ardiran:css:concat', function (done) {
 
-    var dependencies = ardiran.config.dependencies.css,
-        src = [ardiran.config.paths.css.src + '**/*.css'];
+    var src = ardiran.configFile.dependencies.css;
+    src.push(ardiran.configFile.paths.css.src + '**/*.css');
 
-    return concatCSS(dependencies.concat(src), ardiran.config.paths.css.dst);
+    return concat_css(src, ardiran.configFile.paths.css.dst);
+
+  });
+
+  /* Build CSS */
+
+  gulp.task('ardiran:css:build', function (done) {
+
+    gulp.series('ardiran:css:clean', 'ardiran:css:concat')(done);
 
   });
 
@@ -208,23 +236,34 @@ function build() {
     #LESS:BUILD TASK
   \*------------------------------------*/
 
-  gulp.task('ardiran:less:clean', [], function () {
-    return clean([ardiran.config.paths.less.cmp + '**/*.css', ardiran.config.paths.less.dst + '**/*.**']);
+  /* Clean less folders */
+
+  gulp.task('ardiran:less:clean', function (done) {
+    return clean([ardiran.configFile.paths.less.cmp + '**/*.css', ardiran.configFile.paths.less.dst + '**/*.**']);
   });
 
-  gulp.task('ardiran:less:compile', ['ardiran:less:clean'], function () {
-    return compileLESS(ardiran.config.paths.less.src, ardiran.config.paths.less.cmp);
+  /* Compile less */
+
+  gulp.task('ardiran:less:compile', function (done) {
+    return compile_less(ardiran.configFile.paths.less.src, ardiran.configFile.paths.less.cmp);
   });
 
-  gulp.task('ardiran:less:build', ['ardiran:less:compile'], function () {
+  /* Concat compiled less */
 
-    if(ardiran.config.project.styles != 'LESS')
-      return gulp.src('');
+  gulp.task('ardiran:less:concat', function (done) {
 
-    var dependencies = ardiran.config.dependencies.css,
-        src = [ardiran.config.paths.less.cmp + '**/*.css'];
+    var src = ardiran.configFile.dependencies.css;
+    src.push(ardiran.configFile.paths.less.cmp + '**/*.css');
 
-    return concatCSS(dependencies.concat(src), ardiran.config.paths.less.dst);
+    return concat_css(src, ardiran.configFile.paths.less.dst);
+
+  });
+
+  /* Build Less */
+
+  gulp.task('ardiran:less:build', function (done) {
+
+    gulp.series('ardiran:less:clean', 'ardiran:less:compile', 'ardiran:less:concat')(done);
 
   });
 
@@ -232,23 +271,34 @@ function build() {
     #SASS:BUILD TASK
   \*------------------------------------*/
 
-  gulp.task('ardiran:sass:clean', [], function () {
-    return clean([ardiran.config.paths.sass.cmp + '**/*.css', ardiran.config.paths.sass.dst + '**/*.**']);
+  /* Clea SASS Folders */
+
+  gulp.task('ardiran:sass:clean', function (done) {
+    return clean([ardiran.configFile.paths.sass.cmp + '**/*.css', ardiran.configFile.paths.sass.dst + '**/*.**']);
   });
 
-  gulp.task('ardiran:sass:compile', ['ardiran:sass:clean'], function () {
-    return compileSASS(ardiran.config.paths.sass.src, ardiran.config.paths.sass.cmp);
+  /* Compile SASS Files */
+
+  gulp.task('ardiran:sass:compile', function (done) {
+    return compile_sass(ardiran.configFile.paths.sass.src, ardiran.configFile.paths.sass.cmp);
   });
 
-  gulp.task('ardiran:sass:build', ['ardiran:sass:compile'], function () {
+  /* Concat compiled sass */
 
-    if(ardiran.config.project.styles != 'SASS')
-      return gulp.src('');
+  gulp.task('ardiran:sass:concat', function (done) {
 
-    var dependencies = ardiran.config.dependencies.css,
-        src = [ardiran.config.paths.sass.cmp + '**/*.css'];
+    var src = ardiran.configFile.dependencies.css;
+    src.push(ardiran.configFile.paths.sass.cmp + '**/*.css');
 
-    return concatCSS(dependencies.concat(src), ardiran.config.paths.sass.dst);
+    return concat_css(src, ardiran.configFile.paths.sass.dst);
+
+  });
+
+  /* Build Sass */
+
+  gulp.task('ardiran:sass:build', function (done) {
+
+    gulp.series('ardiran:sass:clean', 'ardiran:sass:compile', 'ardiran:sass:concat')(done);
 
   });
 
@@ -256,19 +306,28 @@ function build() {
     #JS:BUILD TASK
   \*------------------------------------*/
 
-  gulp.task('ardiran:js:clean', [], function () {
-    return clean([ardiran.config.paths.js.dst + '**/*.**']);
+  /* Clean js folders */
+
+  gulp.task('ardiran:js:clean', function (done) {
+    return clean([ardiran.configFile.paths.js.dst + '**/*.**']);
   });
 
-  gulp.task('ardiran:js:build', ['ardiran:js:clean'], function () {
+  /* Concat js */
 
-    if(ardiran.config.project.scripts != 'JS')
-      return gulp.src('');
+  gulp.task('ardiran:js:concat', function (done) {
 
-    var dependencies = ardiran.config.dependencies.js,
-        src = [ardiran.config.paths.js.src + '**/*.js'];
+    var src = ardiran.configFile.dependencies.js;
+    src.push(ardiran.configFile.paths.js.src + '**/*.js');
 
-    return concatJS(dependencies.concat(src), ardiran.config.paths.js.dst);
+    return concat_js(src, ardiran.configFile.paths.js.dst);
+
+  });
+
+  /* Build js */
+
+  gulp.task('ardiran:js:build', function (done) {
+
+    gulp.series('ardiran:js:clean', 'ardiran:js:concat')(done);
 
   });
 
@@ -276,23 +335,34 @@ function build() {
     #ES6:BUILD TASK
   \*------------------------------------*/
 
-  gulp.task('ardiran:es6:clean', [], function () {
-    return clean([ardiran.config.paths.es6.cmp + '**/*.js', ardiran.config.paths.es6.dst + '**/*.**']);
+  /* Clean es6 folders */
+
+  gulp.task('ardiran:es6:clean', function (done) {
+    return clean([ardiran.configFile.paths.es6.cmp + '**/*.js', ardiran.configFile.paths.es6.dst + '**/*.**']);
   });
 
-  gulp.task('ardiran:es6:transpile', ['ardiran:es6:clean'], function () {
-    return transpileES6(ardiran.config.paths.es6.src, ardiran.config.paths.es6.cmp);
+  /* Transpile ES6 */
+
+  gulp.task('ardiran:es6:transpile', function (done) {
+    return transpile_es6(ardiran.configFile.paths.es6.src, ardiran.configFile.paths.es6.cmp);
   });
 
-  gulp.task('ardiran:es6:build', ['ardiran:es6:transpile'], function () {
+  /* Concat ES6 */
 
-    if(ardiran.config.project.scripts != 'ES6')
-      return gulp.src('');
+  gulp.task('ardiran:es6:concat', function (done) {
 
-    var dependencies = ardiran.config.dependencies.js,
-        src = [ardiran.config.paths.es6.cmp + '**/*.js'];
+    var src = ardiran.configFile.dependencies.js;
+    src.push(ardiran.configFile.paths.es6.cmp + '**/*.js');
 
-    return concatJS(dependencies.concat(src), ardiran.config.paths.es6.dst);
+    return concat_js(src, ardiran.configFile.paths.es6.dst);
+
+  });
+
+  /* Build js */
+
+  gulp.task('ardiran:es6:build', function (done) {
+
+    gulp.series('ardiran:es6:clean', 'ardiran:es6:transpile', 'ardiran:es6:concat')(done);
 
   });
 
@@ -300,27 +370,40 @@ function build() {
     #TS:BUILD TASK
   \*------------------------------------*/
 
-  gulp.task('ardiran:ts:clean', [], function () {
-    return clean([ardiran.config.paths.ts.cmp_ts + '**/*.js', ardiran.config.paths.ts.cmp_es6 + '**/*.js', ardiran.config.paths.ts.dst + '**/*.**']);
+  /* Clean es6 folders */
+
+  gulp.task('ardiran:ts:clean', function (done) {
+    return clean([ardiran.configFile.paths.ts.cmp_ts + '**/*.js', ardiran.configFile.paths.ts.cmp_es6 + '**/*.js', ardiran.configFile.paths.ts.dst + '**/*.**']);
   });
 
-  gulp.task('ardiran:ts:transpile', ['ardiran:ts:clean'], function () {
-    return transpileTS(ardiran.config.paths.ts.src, ardiran.config.paths.ts.cmp_ts);
+  /* Transpile Ts to ES6 */
+
+  gulp.task('ardiran:ts:transpile', function (done) {
+    return transpile_ts(ardiran.configFile.paths.ts.src, ardiran.configFile.paths.ts.cmp_ts);
   });
 
-  gulp.task('ardiran:ts:es6:transpile', ['ardiran:ts:transpile'], function () {
-    return transpileES6(ardiran.config.paths.ts.cmp_ts, ardiran.config.paths.ts.cmp_es6);
+  /* Transpile ES6 to ES5 */
+
+  gulp.task('ardiran:ts:es6:transpile', function (done) {
+    return transpile_es6(ardiran.configFile.paths.ts.cmp_ts, ardiran.configFile.paths.ts.cmp_es6);
   });
 
-  gulp.task('ardiran:ts:build', ['ardiran:ts:es6:transpile'], function () {
+  /* Concat js */
 
-    if(ardiran.config.project.scripts != 'TS')
-      return gulp.src('');
+  gulp.task('ardiran:ts:concat', function (done) {
 
-    var dependencies = ardiran.config.dependencies.js,
-        src = [ardiran.config.paths.ts.cmp_es6 + '**/*.js'];
+    var src = ardiran.configFile.dependencies.js;
+    src.push(ardiran.configFile.paths.ts.cmp_es6 + '**/*.js');
 
-    return concatJS(dependencies.concat(src), ardiran.config.paths.ts.dst);
+    return concat_js(src, ardiran.configFile.paths.ts.dst);
+
+  });
+
+  /* Build ts */
+
+  gulp.task('ardiran:ts:build', function (done) {
+
+    gulp.series('ardiran:ts:clean', 'ardiran:ts:transpile', 'ardiran:ts:es6:transpile', 'ardiran:ts:concat')(done);
 
   });
 
@@ -328,26 +411,74 @@ function build() {
     #GLOBAL TASKS
   \*------------------------------------*/
 
-  gulp.task('ardiran:build:dependencies', ['ardiran:dependencies:copy'], function () { });
+  /* Build Styles */
 
-  gulp.task('ardiran:build:styles', ['ardiran:set:params', 'ardiran:css:build', 'ardiran:less:build', 'ardiran:sass:build'], function () { });
+  gulp.task('ardiran:styles:build', function (done) {
 
-  gulp.task('ardiran:build:scripts', ['ardiran:set:params', 'ardiran:js:build', 'ardiran:es6:build', 'ardiran:ts:build'], function () { });
+    var build_styles = [];
 
-  gulp.task('ardiran:build:images', ['ardiran:set:params', 'ardiran:images:optimize'], function () {});
+    if (config.styles == 'CSS') build_styles.push('ardiran:css:build');
+    if (config.styles == 'LESS') build_styles.push('ardiran:less:build');
+    if (config.styles == 'SASS') build_styles.push('ardiran:sass:build');
 
-  gulp.task('ardiran:build', ['ardiran:build:styles', 'ardiran:build:scripts', 'ardiran:build:images'], function () { });
+    if (build_styles.length > 0) {
 
-  gulp.task('ardiran:watch', ['ardiran:set:params'], function () {
+      return gulp.series(build_styles)(done);
 
-    gulp.watch(ardiran.config.paths.css.watch + '**/*.css', ['ardiran:css:build']);
-    gulp.watch(ardiran.config.paths.less.watch + '**/*.less', ['ardiran:less:build']);
-    gulp.watch(ardiran.config.paths.sass.watch + '**/*.scss', ['ardiran:sass:build']);
+    } else {
 
-    gulp.watch(ardiran.config.paths.js.watch + '**/*.js', ['ardiran:js:build']);
-    gulp.watch(ardiran.config.paths.es6.watch + '**/*.es6', ['ardiran:es6:build']);
-    gulp.watch(ardiran.config.paths.ts.watch + '**/*.ts', ['ardiran:ts:build']);
+      console.log("[ERROR] You must configure the parameter 'project.styles'.");
+
+      done();
+
+    }
 
   });
+
+  /* Build Scripts */
+
+  gulp.task('ardiran:scripts:build', function (done) {
+
+    var build_scripts = [];
+
+    if (config.scripts == 'JS') build_scripts.push('ardiran:js:build');
+    if (config.scripts == 'ES6') build_scripts.push('ardiran:es6:build');
+    if (config.scripts == 'TS') build_scripts.push('ardiran:ts:build');
+
+    if (build_scripts.length > 0) {
+
+      return gulp.series(build_scripts)(done);
+
+    } else {
+
+      console.log("[ERROR] You must configure the parameter 'project.scripts'.");
+
+      done();
+
+    }
+
+  });
+
+  /* Build Global */
+
+  gulp.task('ardiran:build', gulp.series('ardiran:styles:build', 'ardiran:scripts:build'));
+
+  /* Watch */
+
+  gulp.task('ardiran:watch', function () {
+
+    gulp.watch(ardiran.configFile.paths.css.watch + '**/*.css', gulp.series('ardiran:css:build'));
+    gulp.watch(ardiran.configFile.paths.less.watch + '**/*.less', gulp.series('ardiran:less:build'));
+    gulp.watch(ardiran.configFile.paths.sass.watch + '**/*.scss', gulp.series('ardiran:sass:build'));
+
+    gulp.watch(ardiran.configFile.paths.js.watch + '**/*.js', gulp.series('ardiran:js:build'));
+    gulp.watch(ardiran.configFile.paths.es6.watch + '**/*.es6', gulp.series('ardiran:es6:build'));
+    gulp.watch(ardiran.configFile.paths.ts.watch + '**/*.ts', gulp.series('ardiran:ts:build'));
+
+  });
+
+  /* Deploy */
+
+  gulp.task('ardiran:deploy', gulp.series('ardiran:set:production', 'ardiran:dependencies:copy', 'ardiran:images:optimize', 'ardiran:build'));
 
 }

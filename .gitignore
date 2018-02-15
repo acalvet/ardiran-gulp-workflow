@@ -1,7 +1,7 @@
 .idea/
-assets/scripts/cmp/
-assets/styles/cmp/
-assets/vendor/
+examples/assets/scripts/cmp/
+examples/assets/styles/cmp/
+examples/assets/vendor/
 node_modules/
 yarn.lock
 npm-debug.log

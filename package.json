@@ -16,13 +16,13 @@
     "url": "https://github.com/acalvet/ardiran-gulp-workflow/issues"
   },
   "homepage": "https://github.com/acalvet/ardiran-gulp-workflow#readme",
-  "devDependencies": {},
+  "devDependencies": { },
   "dependencies": {
     "babel-core": "^6.26.0",
     "babel-plugin-transform-es2015-modules-amd": "^6.24.1",
     "babel-preset-env": "^1.6.1",
     "del": "^3.0.0",
-    "gulp": "^3.9.1",
+    "gulp": "~4.0.0",
     "gulp-autoprefixer": "^4.1.0",
     "gulp-babel": "^7.0.1",
     "gulp-clean-css": "^3.9.2",
@@ -30,13 +30,14 @@
     "gulp-if": "^2.0.2",
     "gulp-kraken": "^0.2.0",
     "gulp-less": "^3.5.0",
-    "gulp-param": "^1.0.3",
+    "yargs": "^11.0.0",
     "gulp-rewrite-css": "^1.1.1",
     "gulp-sass": "^3.1.0",
     "gulp-sourcemaps": "^2.6.4",
     "gulp-typescript": "^4.0.1",
     "gulp-uglify": "^3.0.0",
-    "typescript": "^2.7.1",
-    "gulp-copy": "^1.1.0"
+    "typescript": "^2.7.2",
+    "gulp-copy": "^1.1.0",
+    "rx": "^4.1.0"
   }
 }
