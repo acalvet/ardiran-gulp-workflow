@@ -103,11 +103,11 @@ function build() {
   function concat_css(src, dst) {
 
     return gulp.src(src)
-      .pipe(rewriteCSS({destination: dst}))
-      .pipe(concat('build.css'))
       .pipe(gulpif(!config.isProd, sourcemaps.init()))
+      .pipe(rewriteCSS({destination: dst}))
       .pipe(autoprefixer({browsers: ['last 2 versions', '> 5%', 'Firefox ESR']}))
       .pipe(gulpif(config.isProd, cleanCss({rebase: false,})))
+      .pipe(concat('build.css'))
       .pipe(gulpif(!config.isProd, sourcemaps.write('.')))
       .pipe(gulp.dest(dst));
 
@@ -138,9 +138,9 @@ function build() {
   function concat_js(src, dst) {
 
     return gulp.src(src)
-      .pipe(concat('build.js'))
       .pipe(gulpif(!config.isProd, sourcemaps.init()))
       .pipe(gulpif(config.isProd, uglify()))
+      .pipe(concat('build.js'))
       .pipe(gulpif(!config.isProd, sourcemaps.write('.')))
       .pipe(gulp.dest(dst));
 

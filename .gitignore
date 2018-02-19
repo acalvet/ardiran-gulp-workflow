@@ -1,5 +1,9 @@
 .idea/
+examples/assets/scripts/src/
+examples/assets/scripts/public/
 examples/assets/scripts/cmp/
+examples/assets/styles/src/
+examples/assets/styles/public/
 examples/assets/styles/cmp/
 examples/assets/vendor/
 node_modules/
